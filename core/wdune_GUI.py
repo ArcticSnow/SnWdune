@@ -621,7 +621,7 @@ def runModel():
     else:
         asciifier ("surf.txt", outSurf)
         asciifier ("bsmt.txt", outBsmt)
-	asciifier ("shad.txt", outShad)
+		asciifier ("shad.txt", outShad)
         status.config (text = "Model run successfull ... attempting ArcGIS finishing")
      
         # call the ArcGIS finishing function

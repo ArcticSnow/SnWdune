@@ -59,7 +59,7 @@ void timePrinter()     // time printer: prints percentages of time completed
 }
 
 
-void variablePrinter()   // function that print variables value each time the completion percentag is printed on the terminal
+void variablePrinter()   // function that print variables value each time the completion percentag is printed on the terminal, can be useful for debugging
 {
     if (t % (numIterations/10) == 0)
     {
@@ -72,8 +72,14 @@ void variablePrinter()   // function that print variables value each time the co
 }
 
 
-void RecordSurf(int rec_iter)
+void RecordSurf(int rec_iter)  // funtion that saves the surface at a given iteration in a text file in the core folder.
 {
+	/* For future dev:
+			- Would be cool to create a function in python that copy files to a different location, and remove the one created.
+			- Would need to write in the file the iteration number, 
+			- 
+	 */
+	
 	/*
 	for(int i = 0; i < maxNrow; i++){
 		for (int j = 0; j < maxNcol; j++){
@@ -99,3 +105,10 @@ void RecordSurf(int rec_iter)
     }
     fclose (pSurfinter);
 }
+
+void SinterProbWeight(int Stime, int nFact, int tmax) // function that estimate the probability weight to apply as a function of iteration
+{
+	double ProbSint =  1 - exp(pow(Stime,1/nFact)-pow(tmax,1/nFact));
+}
+
+
