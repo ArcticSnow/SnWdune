@@ -895,6 +895,7 @@ void picksite_ero()                 // pick a site to erode from
 	Conditions for erosion:
         1) surface higher than basement
         2) surface higher or equal to shadow (e.g., not in a shadow zone)
+		3) random number has to be lower the probability of sintering 
     Notes:
     This function is an if statement, rather than a while loop to allow
     time to pass properly. If the conditions are assessed as part of a
@@ -902,8 +903,11 @@ void picksite_ero()                 // pick a site to erode from
     */
     if ((surf[i][j] > bsmt[i][j]) && (surf[i][j] >= shad[i][j]))
     {
-        i_ero = i; j_ero = j;   // if conditions are met, set the erosion coordinates
-        ero_flag = true;        // set the flag high
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			i_ero = i; j_ero = j;   // if conditions are met, set the erosion coordinates
+			ero_flag = true;        // set the flag high
+		}
     }
     else
     {

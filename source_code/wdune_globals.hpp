@@ -82,6 +82,18 @@ int bsmt [maxNrow][maxNcol];
 // wind shadow height
 int shad [maxNrow][maxNcol];
 
+// Sintering variables:
+
+int sinTime [maxNrow][maxNcol]; // matrix recording the time of immobility of the surface
+int surfPrev_poll [maxNrow][maxNcol]; // matrx recording the surface elavation of the previous iteration surface for comparison
+int surfPrev_iter [maxNrow][maxNcol];
+bool poll_flag ;
+int sflag;
+bool sinter_flag;
+float nFact; 
+int tmax;
+
+
 // supplemental varaible for snow
 // add HERE the sintering matrix,
 // and other necessary variables for the model

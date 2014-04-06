@@ -70,6 +70,10 @@ void init_wdune()  // initialization
         << "\n    Boundaries code = " << bound_type
         << "\n    New sand code = " << newSandCode
         << "\n    New sand slabs = " << newSandSlabs << endl;
+	if (sinter_flag==true){
+		cout << "Sintering rate = " << nFact
+		<< "\n	Full time sintering = " << tmax <<endl;
+	}
 
     // read in the input files
     // topography
@@ -102,6 +106,8 @@ void init_wdune()  // initialization
     if (bound_type == 4) { nonperiodic_bounds_NS(); }
 
     init_shadupdate();      // update the shadow for the first time
+	init_sinTime();   // update the variables for sintering
+	
 
     cout << "Initialization complete . . entering time loop" << endl;
 }
@@ -111,7 +117,12 @@ void run_wdune()   // run
     int t_poll = 0;                         // poll counter variable
     while (t_poll < (ncols * nrows))
     {
+		poll_flag=true;
+		update_surfPrev(poll_flag);
+		
         picksite_ero();                     // pick a site to erode from
+		
+		
         if (ero_flag)                       // flag is true if the site is good for erosion
         {
             surf[i_ero][j_ero]--;               // remove a slab off the erosion site
@@ -121,6 +132,9 @@ void run_wdune()   // run
             picksite_depo(i_ero, j_ero);        // pick a site to deposit the sand
             deposit(i_depo, j_depo);            // put a slab of sand onto the deposition site
         }
+		
+		update_sinTime();		// update the time slabs had to sinter
+		
         t_poll++;                           // advance the poll counter
     }
     newSandEngine();                        // add some new sand if required
@@ -130,7 +144,7 @@ void final_wdune()     // finalization
 {
     cout << "Exiting time loop . . finalization beginning" << endl;
     cout << "Number of slabs that were transported out of modelspace: " << slabs_out << endl;
-    FILE *pSurf, *pShad;
+    FILE *pSurf, *pShad, *pSint;
 
     // write out the surface array, overwrite what was there originally
     pSurf = fopen ("surf.txt", "w");
@@ -141,7 +155,7 @@ void final_wdune()     // finalization
             fprintf (pSurf, "%i ", surf[i][j]);
         }
         fprintf (pSurf, "%i", surf[i][ncols - 2]);
-        fprintf (pSurf, "%i", surf[i][ncols - 1]);
+        fprintf (pSurf, " %i", surf[i][ncols - 1]);
         fprintf (pSurf, "%s", "\n");    // endline character
     }
     fclose (pSurf);
@@ -154,11 +168,23 @@ void final_wdune()     // finalization
             fprintf (pShad, "%i ", shad[i][j]);
         }
         fprintf (pShad, "%i", shad[i][ncols - 2]);
-        fprintf (pShad, "%i", shad[i][ncols - 1]);
+        fprintf (pShad, " %i", shad[i][ncols - 1]);
         fprintf (pShad, "%s", "\n");    // endline character
     }
     fclose (pShad);
 	
+	pSint = fopen ("sint.txt", "w");
+    for (int i = 0; i < nrows; i++)
+    {
+        for (int j = 0; j < (ncols - 2); j++)
+        {
+            fprintf (pSint, "%i ", sinTime[i][j]);
+        }
+        fprintf (pSint, "%i", sinTime[i][ncols - 2]);
+        fprintf (pSint, " %i", sinTime[i][ncols - 1]);
+        fprintf (pSint, "%s", "\n");    // endline character
+    }
+    fclose (pSint);
 
     cout << "Finalization complete" << endl;
 }

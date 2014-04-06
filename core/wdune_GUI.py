@@ -470,7 +470,7 @@ def runModel():
                 surf_file.write (str(slabs) + " ")          # write the contents of the file
             surf_file.write (str(slabs) + "\n")             # write the end line character
         surf_file.close()
-	shad_file = open ("shad.txt", "w")
+        shad_file = open ("shad.txt", "w")
         for i in range (0, nrows):
             for j in range (0, (ncols - 1)):
                 shad_file.write (str(slabs) + " ")          # write the contents of the file
@@ -527,6 +527,8 @@ def runModel():
     sed_Source = sedSource.get()
     sed_side = sedSide.get()
     newslabs = 0                # default set of parameter
+    sinter_flag = sintOn.get()
+    print sinter_flag
     # try to get entry inputs
     try:
         numIterations = int ( p11_2.get() )
@@ -535,6 +537,10 @@ def runModel():
         psand = float ( p14_2.get() )
         pnosand = float ( p15_2.get() )
         shadangle = float ( p16_2.get() )
+        if sinter_flag=="1":
+		nFact = float ( s3_2.get())
+        	tmax = int (s4_2.get())
+		
     except:
         status.config (text = "ERROR: Model parameters are invalid or missing ...")
         return
@@ -561,7 +567,11 @@ def runModel():
     if numIterations < 10:
         status.config (text = "ERROR: number of iterations must be greater than 10")
         return
-
+    if sinter_flag=="1":
+        if nFact < 0.0 or nFact > 1.0:
+            status.config (text = "ERROR: sintering rate has to be comprised between 0 and 1")
+            return
+		
     # prepare the inputs for calling the model core
     # boundary codes are an integer code, as follows:
     if bounds_NS == 0 and bounds_EW == 0: boundCode = 1
@@ -592,11 +602,19 @@ def runModel():
     if os.name == 'posix': callString = "./wdune_core_linux.exe"
 
     # add the rest of the arguments to the callstring
-    callString = (callString + " " + str(numIterations) + " " + str(wind_dir) + " " +
-                  str(depjump) + " " + str(psand) +  " " + str(pnosand) + " " +
-                  str(dropdist) + " " + str(nrows) + " " + str(ncols) + " " +
-                  str(boundCode) + " " + str(sed_Source) + " " + str(newslabs) + " " +
-                  str(rec_num))
+    if sinter_flag=="0":
+        callString = (callString + " " + str(numIterations) + " " + str(wind_dir) + " " +
+                          str(depjump) + " " + str(psand) +  " " + str(pnosand) + " " +
+                          str(dropdist) + " " + str(nrows) + " " + str(ncols) + " " +
+                          str(boundCode) + " " + str(sed_Source) + " " + str(newslabs) + " " +
+                          str(rec_num)+ " " + str(sinter_flag))
+    else:
+        callString = (callString + " " + str(numIterations) + " " + str(wind_dir) + " " +
+                          str(depjump) + " " + str(psand) +  " " + str(pnosand) + " " +
+                          str(dropdist) + " " + str(nrows) + " " + str(ncols) + " " +
+                          str(boundCode) + " " + str(sed_Source) + " " + str(newslabs) + " " +
+                          str(rec_num)+ " " + str(sinter_flag) + " " + str(nFact) + " " +
+                          str(tmax))
 
     # print calling message
     status.config (text = "Calling model core ...")
@@ -621,7 +639,7 @@ def runModel():
     else:
         asciifier ("surf.txt", outSurf)
         asciifier ("bsmt.txt", outBsmt)
-		asciifier ("shad.txt", outShad)
+	asciifier ("shad.txt", outShad)
         status.config (text = "Model run successfull ... attempting ArcGIS finishing")
      
         # call the ArcGIS finishing function
@@ -700,6 +718,20 @@ def ungreyNewSlabOptions():
     p20_2_4.config (state = NORMAL)
     p21_2.config (state = NORMAL)
     return
+	
+# ----------------------------------------------------------------------------------
+def greySinterOptions():
+    # trigger greying out of the 'New slab' inputs
+    s3_2.config (state = DISABLED)
+    s4_2.config (state = DISABLED)
+    return
+	
+# ----------------------------------------------------------------------------------
+def ungreySinterOptions():
+    # trigger greying out of the 'Existing file' inputs
+    s3_2.config (state = NORMAL)
+    s4_2.config (state = NORMAL)
+    return
 
 # ----------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------
@@ -711,6 +743,7 @@ root.focus_force()      # force focus to GUI window (necessary when called from 
 # main frame: all widgets are gridded in this frame
 parFrame = Frame (root)
 parFrame.pack()
+
 
 # user interface widgets
 p2 = Label (parFrame, text = "Choose type of inputs:")
@@ -766,6 +799,7 @@ p16_2 = Entry (parFrame, width = 20)
 p17 = Label (parFrame, text = "Periodic boundaries:")
 p17_2 = Checkbutton (parFrame, text = "North - South", command = setBounds_NS)
 p18_2 = Checkbutton (parFrame, text = "East - West", command = setBounds_EW)
+
 p19 = Label (parFrame, text = "New slab source:")
 p19_2 = Frame (parFrame)
 
@@ -774,6 +808,7 @@ sedSource = StringVar()
 p19_2_1 = Radiobutton (p19_2, text = "None", variable = sedSource, value = "0", command = greyNewSlabOptions)
 p19_2_2 = Radiobutton (p19_2, text = "Edge", variable = sedSource, value = "20", command = ungreyNewSlabOptions)
 p19_2_3 = Radiobutton (p19_2, text = "Point", variable = sedSource, value = "10", command = ungreyNewSlabOptions)
+			# add an evenly spread slab source to GUI and c++ code
 p19_2_1.pack (side = LEFT)
 p19_2_2.pack (side = LEFT)
 p19_2_3.pack (side = LEFT)
@@ -795,18 +830,33 @@ p20_2_4.pack (side = LEFT)
 p21 = Label (parFrame, text = "Number of slabs to add per iteration:")
 p21_2 = Entry (parFrame, width = 20, state = DISABLED)
 
+s1 = Label (parFrame, text="SNOW PARAMETERS:", fg = "#8B8B22")
+s2 = Label (parFrame, text="Sintering effect:")
+s2_2 = Frame (parFrame)
+sintOn = StringVar()
+s2_2_1 = Radiobutton (s2_2, text = "None", variable = sintOn, value = "0", command = greySinterOptions)
+s2_2_2 = Radiobutton (s2_2, text = "Yes", variable = sintOn, value = "1", command = ungreySinterOptions)
+s2_2_1.pack (side = LEFT)
+s2_2_2.pack (side = LEFT)
+s3 = Label (parFrame, text="Sintering rate:")
+s3_2 = Entry (parFrame, width = 20, state = DISABLED)
+s4 = Label (parFrame, text="Full sintering time:")
+s4_2 = Entry (parFrame, width = 20, state = DISABLED)
+
+
 # select ArcGIS finishing
-p22 = Label (parFrame, text = "Prepare files for viewing in ArcGIS\nchoose a version:", justify = LEFT)
-p22_2 = Frame (parFrame)
+a1 = Label (parFrame, text="ArcGIS PARAMETERS:", fg = "#8B228B")
+a2 = Label (parFrame, text = "Prepare files for viewing in ArcGIS\nchoose a version:", justify = LEFT)
+a2_2 = Frame (parFrame)
 
 # mode choice radiobutton setup
 mode = StringVar()
-p22_2_1 = Radiobutton (p22_2, text = "No ArcGIS preparation", variable = mode, value = "S")
-p22_2_2 = Radiobutton (p22_2, text = "9.2 or 9.3", variable = mode, value = "9.2")
-p22_2_3 = Radiobutton (p22_2, text = "10.0", variable = mode, value = "10.0")
-p22_2_1.grid (row = 0, column = 0, sticky = W, columnspan = 2)
-p22_2_2.grid (row = 1, column = 0, sticky = W)
-p22_2_3.grid (row = 1, column = 1, sticky = W)
+a2_2_1 = Radiobutton (a2_2, text = "No ArcGIS preparation", variable = mode, value = "S")
+a2_2_2 = Radiobutton (a2_2, text = "9.2 or 9.3", variable = mode, value = "9.2")
+a2_2_3 = Radiobutton (a2_2, text = "10.0", variable = mode, value = "10.0")
+a2_2_1.grid (row = 0, column = 0, sticky = W, columnspan = 2)
+a2_2_2.grid (row = 1, column = 0, sticky = W)
+a2_2_3.grid (row = 1, column = 1, sticky = W)
 
 # bottom buttons
 p24 = Button (parFrame, width = 20, text = "View help file ...", command = viewHelp)
@@ -854,24 +904,36 @@ p20.grid        (row = 20, column = 0, sticky = W, padx = 2, pady = 2)
 p20_2.grid      (row = 20, column = 1, sticky = W, padx = 2, pady = 2)
 p21.grid        (row = 21, column = 0, sticky = W, padx = 2, pady = 2)
 p21_2.grid      (row = 21, column = 1, sticky = W, padx = 2, pady = 2)
-p22.grid        (row = 22, column = 0, sticky = W, padx = 2, pady = 2)
-p22_2.grid      (row = 22, column = 1, sticky = W, padx = 2, pady = 2)
 
-p24.grid        (row = 24, column = 0, sticky = W, padx = 2, pady = 2)
-p24_2.grid      (row = 24, column = 1, sticky = W, padx = 2, pady = 2)
-p25.grid        (row = 25, column = 0, sticky = W, padx = 2, pady = 2)
-p25_2.grid      (row = 25, column = 1, sticky = W, padx = 2, pady = 2)
+p24.grid        (row = 22, column = 0, sticky = W, padx = 2, pady = 2)
+p24_2.grid      (row = 22, column = 1, sticky = W, padx = 2, pady = 2)
+p25.grid        (row = 23, column = 0, sticky = W, padx = 2, pady = 2)
+p25_2.grid      (row = 23, column = 1, sticky = W, padx = 2, pady = 2)
+
+
+s1.grid			(row = 9, column = 2, sticky = W, padx = 2, pady = 2)
+s2.grid			(row = 10, column = 2, sticky = W, padx = 2, pady = 2)
+s2_2.grid       (row = 10, column = 3, sticky = W, padx = 2, pady = 2)
+s3.grid			(row = 11, column = 2, sticky = W, padx = 2, pady = 2)
+s3_2.grid       (row = 11, column = 3, sticky = W, padx = 2, pady = 2)
+s4.grid			(row = 12, column = 2, sticky = W, padx = 2, pady = 2)
+s4_2.grid       (row = 12, column = 3, sticky = W, padx = 2, pady = 2)
+
+a1.grid			(row = 13, column = 2, sticky = W, padx = 2, pady = 2)
+a2.grid        (row = 14, column = 2, sticky = W, padx = 2, pady = 2)
+a2_2.grid      (row = 14, column = 3, sticky = W, padx = 2, pady = 2)
+
 
 # set the default values
 # set the mode based on existing configuration file, pre-select the radiobutton
 if version == "S":
-    p22_2_1.select()
+    a2_2_1.select()
 if version == "9.2":
-    p22_2_2.select()
+    a2_2_2.select()
 if version == "9.3":
-    p22_2_2.select()
+    a2_2_2.select()
 if version == "10.0":
-    p22_2_3.select()
+    a2_2_3.select()
 
 # insert / select default values
 p2_2_1.select()
@@ -890,6 +952,9 @@ p18_2.select()
 p19_2_1.select()
 p20_2_1.select()
 p21_2.insert (0, "0")
+s2_2_1.select()
+s3_2.insert(0,".6")
+s4_2.insert(0,"100")
 
 # set status bar on the bottom of the window
 status = Label (root, text = status_oput , bd = 1, relief = SUNKEN, anchor = W, width = 60)

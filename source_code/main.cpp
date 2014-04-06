@@ -58,10 +58,11 @@ using namespace std;
 // include the program as header file
 #include "mersenne_twister.h"     // include the random number generator: Mersenne Twister
 #include "wdune_globals.hpp"      // global variables
+
+
+#include "wdune_acc.hpp"          // accessory functions
 #include "wdune_functions.hpp"    // IRF function definitions
 #include "wdune_irfs.hpp"         // core functions, called by the IRF functions
-#include "wdune_acc.hpp"          // accessory functions
-
 
 int main(int nArgs, char *pszArgs[])
 {
@@ -104,6 +105,14 @@ int main(int nArgs, char *pszArgs[])
     newSandCode = atoi (pszArgs[10]);
     newSandSlabs = atoi (pszArgs[11]);
 	rec_num = atoi (pszArgs[12]);
+	
+	// Sintering variables:
+	sflag = atoi(pszArgs[13]);  // True or False for applying sintering or not
+	if (sflag == 1){
+		sinter_flag=true;
+		nFact = atof(pszArgs[14]);
+		tmax = atoi(pszArgs[15]);
+	}
 
     // A) initialize
     init_wdune();
@@ -112,7 +121,10 @@ int main(int nArgs, char *pszArgs[])
 
     while (t < numIterations)
     {
+		
         // run, called every timestep
+			update_surfPrev(poll_flag);
+		
         run_wdune();
 		if (t % (numIterations/rec_num) == 0)
 		{
@@ -121,6 +133,11 @@ int main(int nArgs, char *pszArgs[])
 		}
 		timePrinter();
 		variablePrinter();
+		
+		
+		poll_flag=false;
+		update_sinTime();
+		
         t++;
     }
 

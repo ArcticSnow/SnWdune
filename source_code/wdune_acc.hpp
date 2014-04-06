@@ -100,15 +100,103 @@ void RecordSurf(int rec_iter)  // funtion that saves the surface at a given iter
             fprintf (pSurfinter, "%i ", surf[i][j]);
         }
         fprintf (pSurfinter, "%i", surf[i][ncols - 2]);
-        fprintf (pSurfinter, "%i", surf[i][ncols - 1]);
+        fprintf (pSurfinter, " %i", surf[i][ncols - 1]);
         fprintf (pSurfinter, "%s", "\n");    // endline character
     }
     fclose (pSurfinter);
 }
 
-void SinterProbWeight(int Stime, int nFact, int tmax) // function that estimate the probability weight to apply as a function of iteration
+double SinterProbWeight(int Stime) // function that estimate the probability weight to apply as a function of iteration
 {
-	double ProbSint =  1 - exp(pow(Stime,1/nFact)-pow(tmax,1/nFact));
+	double probSint;
+	if (sinter_flag==true){
+		if (Stime>tmax){
+			probSint = 0;
+		}else {
+			probSint =  1 - exp(pow(Stime,nFact)-pow(tmax,nFact));
+		}
+		return probSint;
+	}else{
+		probSint = 1;
+		return probSint;
+	}
 }
+
+void update_sinTime()
+{
+	if (sinter_flag==true){
+		int surfChange;
+		if(poll_flag==false)
+		{
+			for (int i = 0; i < nrows; i++)
+			{
+				for (int j = 0; j < ncols; j++)
+				{
+					surfChange = surf[i][j] - surfPrev_iter[i][j];
+					if (surfChange==0){
+						sinTime[i][j]++;
+					}
+					if (surfChange>0)
+					{
+						sinTime[i][j]=0;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < nrows; i++)
+			{
+				for (int j = 0; j < ncols; j++)
+				{
+					int surfChange = surf[i][j] - surfPrev_poll[i][j];
+					if (surfChange>0)
+					{
+						sinTime[i][j]=0;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+void init_sinTime()
+{
+	if (sinter_flag==true){
+		for (int i = 0; i < nrows; i++)
+		{
+			for (int j = 0; j < ncols; j++)
+			{
+				sinTime[i][j] = 0;
+			}
+		}
+	}
+}
+
+void update_surfPrev(bool poll_flag)
+{
+	if (sinter_flag==true){
+		for (int i = 0; i < nrows; i++)
+		{
+			for (int j = 0; j < ncols; j++)
+			{
+				if(poll_flag==false){
+					surfPrev_iter[i][j] = surf[i][j];
+				}else{
+					surfPrev_poll[i][j] = surf[i][j];
+				}
+				
+				
+			}
+		}
+	}
+}
+
+
+
+
+
+
 
 
