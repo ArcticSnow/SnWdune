@@ -613,22 +613,34 @@ void avalanche_up(int i, int j)     // avalanche up (called after picking up a s
     // look to the north
     if ((surf[i_n[i]][j] - surf[i][j] > avalanche_thresh) && (surf[i_n[i]][j] - bsmt[i_n[i]][j] > 0))
     {
-        avidir[0] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[0] = true;
+		}
     }
     // look to the south
     if ((surf[i_s[i]][j] - surf[i][j] > avalanche_thresh) && (surf[i_s[i]][j] - bsmt[i_s[i]][j] > 0))
     {
-        avidir[1] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[1] = true;
+		}
     }
     // look to the east
     if ((surf[i][j_e[j]] - surf[i][j] > avalanche_thresh) && (surf[i][j_e[j]] - bsmt[i][j_e[j]] > 0))
     {
-        avidir[2] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[2] = true;
+		}
     }
     // look to the west
     if ((surf[i][j_w[j]] - surf[i][j] > avalanche_thresh) && (surf[i][j_w[j]] - bsmt[i][j_w[j]] > 0))
     {
-        avidir[3] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[3] = true;
+		}
     }
 	
     // check to see if there is an avalanche to fall
@@ -693,22 +705,34 @@ void avalanche_down(int i, int j)   // avalanche down (called after placing a sl
     // look to the north
     if (surf [i][j] - surf[i_n[i]][j] > avalanche_thresh)
     {
-        avidir[0] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[0] = true;
+		}
     }
     // look to the south
     if (surf[i][j] - surf[i_s[i]][j] > avalanche_thresh)
     {
-        avidir[1] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[1] = true;
+		}
     }
     // look to the east
     if (surf[i][j] - surf[i][j_e[j]] > avalanche_thresh)
     {
-        avidir[2] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[2] = true;
+		}
     }
     // look to the west
     if (surf[i][j] - surf[i][j_w[j]] > avalanche_thresh)
     {
-        avidir[3] = true;
+		double probSint = SinterProbWeight(sinTime[i][j]);
+		if(genrand_real1() < probSint){
+			avidir[3] = true;
+		}
     }
 	
     // check to see if there is an avalanche to fall

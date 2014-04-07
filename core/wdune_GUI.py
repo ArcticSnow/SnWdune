@@ -58,7 +58,10 @@ if sys.version_info[0] == 3:
 # set the working directory to the core directory
 if os.path.basename (sys.argv[0]) == "wdune_GUI.py":
     os.chdir (sys.path[0])
-    def_dir = "C://"
+    if os.name == 'nt':
+        def_dir = "C://"
+    if os.name == 'posix':
+        def_dir = "/home"
 else:
     # else, the working directory is ./core/
     # set path names differently based on operating system
@@ -68,17 +71,20 @@ else:
     if os.name == 'posix':
         os.chdir (sys.path[0] + "/core")
         def_dir = "/home"
-    
+
 
 # set variables and defaults
 global bounds_NS, bounds_EW, outSurf_dir, outSurf, outBsmt_dir, outBsmt, outShad, outShad_dir
 global inSurf_dir, inBsmt_dir, inSurf, inBsmt, version
+global numIterations, wind_dir, depjump, psand, pnosand, shadangle, nrows, ncols 
+global bounds_EW, bounds_NS, sed_source, newslabs, sinter_flag
+global nFact, tmax
 
 bounds_NS = 1
 bounds_EW = 1
-outSurf_dir = def_dir
-outBsmt_dir = def_dir
-outShad_dir = def_dir
+outSurf_dir = sys.path[0]
+outBsmt_dir = sys.path[0]
+outShad_dir = sys.path[0]
 inSurf_dir = def_dir
 inBsmt_dir = def_dir
 status_oput = "Ready ..."
@@ -307,8 +313,7 @@ def setOutSurf():
     # set an output location for a surface file
     global outSurf_dir, outSurf
     # open a dialog box to choose the location
-    outSurf = tkFileDialog.asksaveasfilename (initialdir = outSurf_dir, initialfile = "surf_GIS.asc",
-                parent = root, title = "Save output surface file", defaultextension = ".asc")  
+    outSurf = outSurf_dir+"/surf_GIS.asc"
 
     # if a file is chosen, separate the directory and name
     if outSurf != "":
@@ -338,8 +343,7 @@ def setOutShad():
     # set an output location for a surface file
     global outShad_dir, outShad
     # open a dialog box to choose the location
-    outShad = tkFileDialog.asksaveasfilename (initialdir = outShad_dir, initialfile = "shad_GIS.asc",
-                parent = root, title = "Save output shadow file", defaultextension = ".asc")  
+    outShad = outShad_dir+"/shad_GIS.asc"  
 
     # if a file is chosen, separate the directory and name
     if outShad != "":
@@ -370,8 +374,7 @@ def setOutBsmt():
     # set an output location for a basement file
     global outBsmt_dir, outBsmt
     # open a dialog box to choose the location
-    outBsmt = tkFileDialog.asksaveasfilename (initialdir = outBsmt_dir, initialfile = "bsmt_GIS.asc",
-                parent = root, title = "Save output basement file", defaultextension = ".asc")  
+    outBsmt = outBsmt_dir+"/bsmt_GIS.asc" 
 
     # if a file is chosen, separate the directory and name
     if outBsmt != "":
@@ -430,6 +433,60 @@ def viewHelp():
             status.config (text = "ERROR: Unable to automatically open file, open 'wdune_help.pdf'")
             
     return
+# ----------------------------------------------------------------------------------
+# Functoin to write localy a text file containing all of the model parameters:
+def write_runParam():
+    global numIterations, wind_dir, depjump, psand, pnosand, shadangle, nrows, ncols 
+    global bounds_EW, bounds_NS, sed_Source, newslabs, sinter_flag
+    global nFact, tmax, slabs
+
+    param_file=open("run_parameters.txt","w")
+    param_file.write("Parameters of the run: \n")
+    param_file.write("\t number of iterations = "+str(numIterations)+" \n")
+    if wind_dir==1:
+        wind_direction="North"
+    else:
+        if wind_dir==2:
+            wind_direction="South"
+        else:
+            if wind_dir==3:
+                wind_direction="East"
+            else:
+                wind_direction="West"
+    param_file.write("\t wind direction = "+wind_direction+" \n")
+    param_file.write("\t deposition jump = "+str(depjump)+" \n")
+    param_file.write("\t Probability on sand (psand) = "+str(psand)+" \n")
+    param_file.write("\t Probability no sand (pnosand) = "+str(pnosand)+" \n")
+    param_file.write("\t Shadow andgle = "+str(shadangle)+" \n")
+    param_file.write("\t number of rows = "+str(nrows)+" \n")
+    param_file.write("\t number of columns = "+str(ncols)+" \n")
+    param_file.write("\t Thickness of slabs (new input) = "+str(slabs)+" \n")
+    param_file.write("\t Boundary East West = "+str(bounds_EW)+" \n")
+    param_file.write("\t Boundary North South = "+str(bounds_NS)+" \n")
+    param_file.write("\t Sediment source = "+str(sed_Source)+" \n")
+    param_file.write("\t Number of new slabs = "+str(newslabs)+" \n")
+    param_file.write("\t Sintering flag = "+str(sinter_flag)+" \n")
+    if sinter_flag=="1":
+        global nFact, tmax
+        param_file.write("\t Sintering rate = "+str(nFact)+" \n")
+        param_file.write("\t Time of maximum sintering strength = "+str(tmax)+" \n")
+    param_file.close()
+# ----------------------------------------------------------------------------------
+# funtion to move all files containing results to a different folder, and keep the software core clean of "crap"
+def move_result_files():
+    import shutil
+    from path import path
+    global inSurf_dir
+    originDir=sys.path[0]
+    finalDir=tkFileDialog.askdirectory(title="Choose destination directory of files to move:")
+    p=path(originDir)
+    myfiles=p.files(pattern='surf*')
+    myfiles.extend(p.files(pattern="shad*"))
+    myfiles.extend(p.files(pattern="sint*"))
+    myfiles.extend(p.files(pattern="bsmt*"))
+    myfiles.extend(p.files(pattern="run_param*"))
+    for name in myfiles:
+        shutil.move(name, finalDir)
 
 # ----------------------------------------------------------------------------------
 # Run the model
@@ -437,7 +494,10 @@ def runModel():
     # run a series of input checks before calling the model core
     global inSurf, inBsmt, outSurf, outBsmt, outShad, outShad_dir ,outSurf_dir, outBsmt_dir, bounds_NS, bounds_EW, version
     status.config (text = "Checking inputs ...")
-
+    global numIterations, wind_dir, depjump, psand, pnosand, shadangle, nrows, ncols 
+    global bounds_EW, bounds_NS, sed_Source, newslabs, sinter_flag
+    global nFact, tmax, slabs
+    
     # if 'new inputs' are chosen, make some new input files
     if in_type.get() == "N":
         # get the inputs and try to parse to integers
@@ -616,6 +676,9 @@ def runModel():
                           str(rec_num)+ " " + str(sinter_flag) + " " + str(nFact) + " " +
                           str(tmax))
 
+    # write localy model paramters to the file run_parameters.txt
+    write_runParam()
+
     # print calling message
     status.config (text = "Calling model core ...")
 
@@ -648,7 +711,9 @@ def runModel():
             status.config (text = "Model run successfull!")
         except:
             status.config (text = "Model run successfull!   ArcGIS finishing unsuccessful!")
-
+    
+    # move result files to a destination folder
+    move_result_files()
     # if this script is called from ArcGIS launcher, close the window
     if os.path.basename (sys.argv[0]) == "wdune_GUI.py":
         exitProgram()

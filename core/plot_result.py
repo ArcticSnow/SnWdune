@@ -34,16 +34,16 @@ def plot_surf_inter(nRow=None,nCol=None, mydir=None, toGIF=None):
         from matplotlib import animation
         fig=plt.figure()
         def animate(nframe):
-            plt.cla()
-            plt.imshow(mysurfaces[:,:,nframe],cmap='jet')
-            plt.colorbar() 
+            #plt.cla()
+            plt.imshow(mysurfaces[:,:,nframe],cmap='hot',vmin=mysurfaces[:,:,nPlots-1].min(),vmax=mysurfaces[:,:,nPlots-1].max())
+            #plt.colorbar() 
         anim = animation.FuncAnimation(fig, animate, frames=nPlots)
         anim.save('demoanimation.gif', writer='imagemagick', fps=4);
     else:
         plt.figure()
         for i in range(nPlots):            
             plt.subplot(nRow,nCol,i+1)
-            plt.imshow(mysurfaces[:,:,i],cmap='jet')
+            plt.imshow(mysurfaces[:,:,i],cmap='hot',vmin=mysurfaces[:,:,nPlots-1].min(),vmax=mysurfaces[:,:,nPlots-1].max())
             plt.colorbar()
 
 
@@ -64,11 +64,12 @@ def loadSurfaces(mydir=None):
     
 
 
+mysurfaces=loadSurfaces()
+plt.figure()
+plt.hist(mysurfaces[:,:,1].flatten(1),14)
 
-plot_surf_inter(10)
 
-
-
+plot_surf_inter()
 
 
 
